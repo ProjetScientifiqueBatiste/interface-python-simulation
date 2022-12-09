@@ -6,14 +6,14 @@ from ursina import *
 window.title = 'Ursina Serial Port'
 window.borderless = False
 window.size = (400, 700)
-window.fps_cap = 60
+window.fps_cap = 30
 
 # UART
 PORT = 'COM9'
 UART_SPEED = 115200
 ser = serial.Serial()
 
-sendState = False
+isSerialOpen = False
 
 TAILLE_DATA = 10
 
@@ -30,7 +30,7 @@ def createData():
 # Function to initialize the UART
 def initUart(port, speed):
 
-    global sendState
+    global isSerialOpen
 
     ser.port = port
     ser.baudrate = speed
@@ -49,21 +49,26 @@ def initUart(port, speed):
         print(f"Opening serial port: {port} SUCCESS")
         # Change the button text
         serial_port_button.text = "Close Serial Port"
-        sendState = True
+        isSerialOpen = True
+        serialStateText.text = f'Serial port {ser.port} opened'
+        serialStateText.color = color.green
     except serial.SerialException:
         print(f"Serial {port} port not available")
-        exit()
+        serialStateText.text = f'Serial port {ser.port} not available'
+        serialStateText.color = color.red
 
 # Function to close the UART
 def closeUart():
 
-    global sendState
+    global isSerialOpen
 
     ser.close()
     print(f"Closing serial port : {PORT} SUCCESS")
     # Change the button text
     serial_port_button.text = "Open Serial Port"
-    sendState = False
+    isSerialOpen = False
+    serialStateText.text = f'Serial port {PORT} not opened'
+    serialStateText.color = color.red
 
 # Function to send data to the µBit via the UART
 def sendUartData(msg):
@@ -82,39 +87,79 @@ Button list :
     - Send Data
 """
 
+# Text to display the current state of the serial port
+serialStateText = Text(text=f'Serial port {PORT} not opened', position=(-0.1, 0.4), color=color.red)
+
 # Create a button to open the serial port, at the left of the window
 serial_port_button = Button(text='Open Serial Port',
                             scale=(0.2, 0.1), position=(0, -0.2))
 
-# Create a button to send data, at the right of the window
+# Create a button to send data, at the bottom of the window
 send_data_button = Button(
     text='Send Data', scale=(0.2, 0.1), position=(0, 0.2))
 
+# Create a button to read the data on the serial, at the center of the window
+read_data_button = Button(
+    text='Read Data', scale=(0.2, 0.1), position=(0, 0))
+
 # List representing the buttons
-buttons = [serial_port_button, send_data_button]
+buttons = [serial_port_button, send_data_button, read_data_button]
 
 # Create the on_click function for each buttons
 for button in buttons:
+
+    # Apply the on_click function to each button
     def on_click(b=button):
+
+        # Check which button is clicked using the match statement
         match b.text:
+            # Serial Port opening and closing
             case 'Open Serial Port':
                 print("Opening serial port")
                 initUart(PORT, UART_SPEED)
             case 'Close Serial Port':
                 print("Closing serial port")
                 closeUart()
+
+            # Send data to the µBit
             case 'Send Data':
-                if sendState:
-                    print("========= UART Data sending =========")
+                if isSerialOpen:
+                    print("========= UART Data sending START =========")
                     for _ in range(TAILLE_DATA):
                         msg = createData()
                         print(f"Sending data to the µBit via UART : {msg}")
                         sendUartData(msg)
+                    print("========= UART Data sending END =========")
                 else:
                     print("Serial port not opened, please open it first")
 
+            # Read data from the µBit
+            case 'Read Data':
+                # print("========= UART Data reading START =========")
+                # while ser.in_waiting:
+                #     dataRead = ser.readline()
+                #     print(f"Received data from the µBit via UART : {dataRead}")
+                # print("========= UART Data reading END =========")
+                pass
+
     button.on_click = on_click
 
+
+def update():
+    # This function is called every frame
+
+    # Check if there is data to read
+    if isSerialOpen :
+        if ser.in_waiting:
+            dataRead = ser.readline()
+            print(f"Received data from the µBit via UART : {dataRead}")
+    
+    if isSerialOpen :
+        send_data_button.enable()
+        read_data_button.enable()
+    else :
+        send_data_button.disable()
+        read_data_button.disable()
 
 # Run the app
 if __name__ == '__main__':
