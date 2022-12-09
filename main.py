@@ -98,12 +98,8 @@ serial_port_button = Button(text='Open Serial Port',
 send_data_button = Button(
     text='Send Data', scale=(0.2, 0.1), position=(0, 0.2))
 
-# Create a button to read the data on the serial, at the center of the window
-read_data_button = Button(
-    text='Read Data', scale=(0.2, 0.1), position=(0, 0))
-
 # List representing the buttons
-buttons = [serial_port_button, send_data_button, read_data_button]
+buttons = [serial_port_button, send_data_button]
 
 # Create the on_click function for each buttons
 for button in buttons:
@@ -133,15 +129,6 @@ for button in buttons:
                 else:
                     print("Serial port not opened, please open it first")
 
-            # Read data from the µBit
-            case 'Read Data':
-                # print("========= UART Data reading START =========")
-                # while ser.in_waiting:
-                #     dataRead = ser.readline()
-                #     print(f"Received data from the µBit via UART : {dataRead}")
-                # print("========= UART Data reading END =========")
-                pass
-
     button.on_click = on_click
 
 
@@ -156,10 +143,8 @@ def update():
     
     if isSerialOpen :
         send_data_button.enable()
-        read_data_button.enable()
     else :
         send_data_button.disable()
-        read_data_button.disable()
 
 # Run the app
 if __name__ == '__main__':
