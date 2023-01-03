@@ -12,22 +12,24 @@ table = PrettyTable()
 
 table.field_names = ["César", "Protocole", "Source", "Destination", "Data type", "Data", "Hash", "Taille"]
 
-CLE_CESAR = 1
+CAESAR_KEY = 1
 PROTOCOLE = 14
 
 LARGEUR = 10
 HAUTEUR = 6
 NOMBRE_CAPTEURS = LARGEUR * HAUTEUR
 
-# Function to cipher a message with the Cesar cipher
-def cipherCesar(trame, key):
+def cipherCaesar(trame, key):
+    """ Function to cipher a message with the Caesar cipher """
+
     for i in range(len(trame)):
         trame[i] = (trame[i] + key) % 256
     
     return trame
 
-# Function to decipher a message with the Cesar cipher
-def decipherCesar(trame, key):
+def decipherCaesar(trame, key):
+    """ Function to decipher a message with the Caesar cipher """
+
     if type(trame) == list:
         newTrame = trame.copy()
         for i in range(len(newTrame)):
@@ -36,15 +38,16 @@ def decipherCesar(trame, key):
     else:
         return (trame - key) % 256
 
-# Function to get the id of a sensor in the array of sensors
 def getSensorId(x, y):
+    """ Function to get the id of a sensor in the array of sensors """
+
     idSensor = x + y * LARGEUR
     return idSensor
 
-# Function to create a data request
 def createDataRequest(idSensor):
-    # req = {Protocole}{source}{destination}{data type}{intensity}
     """
+        Function to create a data request
+    
         Protocole : 1 byte ==> 14
         source : 2 byte ==> idSensor
         destination : 2 byte ==> 1
@@ -58,14 +61,11 @@ def createDataRequest(idSensor):
         1, # Destination
         1, # Data type
         createRandomData(), # Intensity (between 0 and 9
+        *[0]*9,
     ]
-
-    # Ajout de 9 cases vides à la suite pour l'évolution du projet
-    for _ in range(9):
-        req.append(0)
     
-    # Chiffrement de la requete avec le chiffrement de Cesar
-    req = cipherCesar(req, CLE_CESAR)
+    # Chiffrement de la requete avec le chiffrement de Caesar
+    req = cipherCaesar(req, CAESAR_KEY)
     
     # Ajout du hash MD5 sur 12 octets à la fin
     hash = hashlib.md5(bytes(req)).digest()
@@ -82,14 +82,14 @@ def createDataRequest(idSensor):
     if table.get_string() != "":
         table.clear_rows()
 
-    # Ajout des lignes du tableau sans et avec le chiffrement de Cesar
+    # Ajout des lignes du tableau sans et avec le chiffrement de Caesar
     table.add_row([
         "False",
-        decipherCesar(req[0], CLE_CESAR),
-        decipherCesar(req[1] + req[2], CLE_CESAR),
-        decipherCesar(req[3], CLE_CESAR),
-        decipherCesar(req[4], CLE_CESAR),
-        decipherCesar(req[5:15], CLE_CESAR),
+        decipherCaesar(req[0], CAESAR_KEY),
+        decipherCaesar(req[1] + req[2], CAESAR_KEY),
+        decipherCaesar(req[3], CAESAR_KEY),
+        decipherCaesar(req[4], CAESAR_KEY),
+        decipherCaesar(req[5:15], CAESAR_KEY),
         " ".join(map(str, req[15:-1])),
         req[-1]
     ])
@@ -107,31 +107,34 @@ def createDataRequest(idSensor):
 
     return req
     
-# One data is : (x, y, POWER)
-# x and y are between 0 and 9
-# POWER is between 0 and 9
 def createRandomData():
+    """
+        One data is : (x, y, POWER)
+        x and y are between 0 and 9
+        POWER is between 0 and 9
+    """
     return random.randint(0, 9)
 
-# Function to send data to the µBit via the UART
-def sendCliData(msg):
-    print(*msg, sep=' ')
-
 def displayArray(array):
+    """ Function to display the array of sensors """
+
     for i in range(len(array)):
         print(array[i])
 
 def createRandomSensorArray(largeur, hauteur):
+    """ Function to create a random array of sensors """
+
     array = [[createRandomData() for _ in range(largeur)] for _ in range(hauteur)]
     return array
 
 def checkHash(trame):
-    # Vérification du hash MD5 par rapport aux données dans la trame
     """
-    Data : 15 octets
-    Hash : 16 octets
-    Taille : 1 octet
+        Vérification du hash MD5 par rapport aux données dans la trame
+        Data : 15 octets
+        Hash : 16 octets
+        Taille : 1 octet
     """
+
     hashTrame = " ".join(map(str, trame[15:-1]))
     print("Hash présent dans la trame : ", hashTrame)
     hash = hashlib.md5(bytes(trame[:-17])).digest()
