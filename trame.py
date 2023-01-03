@@ -10,79 +10,77 @@ def clear():
 
 table = PrettyTable()
 
-table.field_names = ["César", "Protocole", "Source", "Destination", "Data type", "Data", "Hash", "Taille"]
+table.field_names = ["César", "protocol", "Source", "Destination", "Data type", "Data", "Hash", "Taille"]
 
 CAESAR_KEY = 1
-PROTOCOLE = 14
+PROTOCOL_ID = 14
 
-LARGEUR = 10
-HAUTEUR = 6
-NOMBRE_CAPTEURS = LARGEUR * HAUTEUR
+WIDTH = 10
+HEIGHT = 6
+SENSORS_AMOUT = WIDTH * HEIGHT
 
-def cipherCaesar(trame, key):
+def cipherCaesar(frame, key):
     """ Function to cipher a message with the Caesar cipher """
 
-    for i in range(len(trame)):
-        trame[i] = (trame[i] + key) % 256
+    for i in range(len(frame)):
+        frame[i] = (frame[i] + key) % 256
     
-    return trame
+    return frame
 
-def decipherCaesar(trame, key):
+def decipherCaesar(frame, key):
     """ Function to decipher a message with the Caesar cipher """
 
-    if type(trame) == list:
-        newTrame = trame.copy()
-        for i in range(len(newTrame)):
-            newTrame[i] = (newTrame[i] - key) % 256
-        return newTrame
+    if type(frame) == list:
+        newFrame = frame.copy()
+        for i in range(len(newFrame)):
+            newFrame[i] = (newFrame[i] - key) % 256
+        return newFrame
     else:
-        return (trame - key) % 256
+        return (frame - key) % 256
 
 def getSensorId(x, y):
     """ Function to get the id of a sensor in the array of sensors """
 
-    idSensor = x + y * LARGEUR
+    idSensor = x + y * WIDTH
     return idSensor
 
 def createDataRequest(idSensor):
     """
         Function to create a data request
     
-        Protocole : 1 byte ==> 14
+        protocol : 1 byte ==> 14
         source : 2 byte ==> idSensor
         destination : 2 byte ==> 1
         data type : 1 byte ==> 1
         intensity : 1 byte ==> between 0 and 9
     """
     req = [
-        PROTOCOLE, # Protocole
+        PROTOCOL_ID,
         idSensor // 256, # Source ("// 256" to get the first byte)
         idSensor % 256, # Source ("% 256" to get the second byte)
         1, # Destination
         1, # Data type
-        createRandomData(), # Intensity (between 0 and 9
-        *[0]*9,
+        createRandomData(), # Intensity (between 0 and 9)
+        *[0]*9, # Other data slots
     ]
     
-    # Chiffrement de la requete avec le chiffrement de Caesar
+    # Apply the Caesar cipher on the request
     req = cipherCaesar(req, CAESAR_KEY)
     
-    # Ajout du hash MD5 sur 12 octets à la fin
+    # MD5 hash 
     hash = hashlib.md5(bytes(req)).digest()
     for i in range(len(hash)):
         req.append(hash[i])
     
-    # Calcul de la taille de la requete sans le hash
-    taille = len(req) - len(hash)
+    # Data size
+    size = len(req) - len(hash)
+    req.append(size)
 
-    # Ajout de la taille de la requete sur 1 octet à la fin
-    req.append(taille)
-
-    # Ajout de la requete dans le tableau
+    # Clear the table
     if table.get_string() != "":
         table.clear_rows()
 
-    # Ajout des lignes du tableau sans et avec le chiffrement de Caesar
+    # Add the data to the table
     table.add_row([
         "False",
         decipherCaesar(req[0], CAESAR_KEY),
@@ -121,49 +119,49 @@ def displayArray(array):
     for i in range(len(array)):
         print(array[i])
 
-def createRandomSensorArray(largeur, hauteur):
+def createRandomSensorArray(width, height):
     """ Function to create a random array of sensors """
 
-    array = [[createRandomData() for _ in range(largeur)] for _ in range(hauteur)]
+    array = [[createRandomData() for _ in range(width)] for _ in range(height)]
     return array
 
-def checkHash(trame):
+def checkHash(frame):
     """
-        Vérification du hash MD5 par rapport aux données dans la trame
-        Data : 15 octets
-        Hash : 16 octets
-        Taille : 1 octet
+        Check the MD5 hash according to the data in the frame
+        Data : 15 bytes
+        Hash : 16 bytes
+        Size : 1 byte
     """
 
-    hashTrame = " ".join(map(str, trame[15:-1]))
-    print("Hash présent dans la trame : ", hashTrame)
-    hash = hashlib.md5(bytes(trame[:-17])).digest()
+    hashFrame = " ".join(map(str, frame[15:-1]))
+    print("Hash présent dans la trame : ", hashFrame)
+    hash = hashlib.md5(bytes(frame[:-17])).digest()
     hash = " ".join(map(str, hash))
     print("Hash re-calculé : ", hash)
 
-    print("Les deux hash sont identiques" if hashTrame == hash else "Les deux hash sont différents")   
+    print("Les deux hash sont identiques" if hashFrame == hash else "Les deux hash sont différents")   
 
 def main():
     # Init the array of sensors
-    capteurs = createRandomSensorArray(LARGEUR, HAUTEUR)
-    displayArray(capteurs)
+    sensors = createRandomSensorArray(WIDTH, HEIGHT)
+    displayArray(sensors)
 
     # Periodic sending of a data from a random sensor in the array
     while True:
         clear()
         # Get a random sensor
-        x = random.randint(0, LARGEUR - 1)
-        y = random.randint(0, HAUTEUR - 1)
+        x = random.randint(0, WIDTH - 1)
+        y = random.randint(0, HEIGHT - 1)
         idSensor = getSensorId(x, y)
         # Create the data 
         data = createDataRequest(idSensor)
         # print the data
         print(table)
 
-        # Vérification du hash MD5 par rapport aux données dans la trame
+        # Check the hash
         checkHash(data)
 
-        # Wait a bit
+        # Wait 
         time.sleep(5)
 
 # Run the app
