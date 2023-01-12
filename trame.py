@@ -10,7 +10,7 @@ def clear():
 
 table = PrettyTable()
 
-table.field_names = ["César", "protocol", "Source", "Destination", "Data type", "Data", "Hash", "Taille"]
+table.field_names = ["César", "protocol", "Source", "Destination", "Data type", "Data", "Hashed Caesar", "Taille"]
 
 CAESAR_KEY = 1
 PROTOCOL_ID = 14
@@ -61,17 +61,17 @@ def createDataRequest(idSensor):
         1, # Destination
         1, # Data type
         createRandomData(), # Intensity (between 0 and 9)
-        *[0]*9, # Other data slots
+        # *[0]*9, # Other data slots
     ]
     
     # Apply the Caesar cipher on the request
     req = cipherCaesar(req, CAESAR_KEY)
     
-    # MD5 hash 
-    hash = hashlib.md5(bytes(req)).digest()
+    # sha1 hash 
+    hash = hashlib.sha1(bytes(req)).digest()[:5]
     for i in range(len(hash)):
         req.append(hash[i])
-    
+        
     # Data size
     size = len(req) - len(hash)
     req.append(size)
@@ -87,8 +87,8 @@ def createDataRequest(idSensor):
         decipherCaesar(req[1] + req[2], CAESAR_KEY),
         decipherCaesar(req[3], CAESAR_KEY),
         decipherCaesar(req[4], CAESAR_KEY),
-        decipherCaesar(req[5:15], CAESAR_KEY),
-        " ".join(map(str, req[15:-1])),
+        decipherCaesar(req[5], CAESAR_KEY),
+        " ".join(map(str, req[6:-1])),
         req[-1]
     ])
 
@@ -98,8 +98,8 @@ def createDataRequest(idSensor):
         req[1] + req[2],
         req[3],
         req[4],
-        req[5:15],
-        " ".join(map(str, req[15:-1])),
+        req[5],
+        " ".join(map(str, req[6:-1])),
         req[-1]
     ])
 
@@ -127,15 +127,17 @@ def createRandomSensorArray(width, height):
 
 def checkHash(frame):
     """
-        Check the MD5 hash according to the data in the frame
+        Check the sha1 hash according to the data in the frame
         Data : 15 bytes
-        Hash : 16 bytes
+        Hash : 6 bytes
         Size : 1 byte
     """
 
-    hashFrame = " ".join(map(str, frame[15:-1]))
+    hashFrame = " ".join(map(str, frame[6:-1]))
     print("Hash présent dans la trame : ", hashFrame)
-    hash = hashlib.md5(bytes(frame[:-17])).digest()
+    # Calculate the hash
+    print(frame)
+    hash = hashlib.sha1(bytes(frame[:5])).digest()[:5]
     hash = " ".join(map(str, hash))
     print("Hash re-calculé : ", hash)
 
