@@ -99,9 +99,9 @@ while True:
             # Envoie des données à l'API de l'Emergency Manager
             putApi(data)
 
-            # Envoie des données au serveur influxDB
-            point = f"capteur,numero={data[1].zfill(2)} intensity={int(data[4])},etat={int(data[3])}"
+# Envoie des données au serveur influxDB
+point = f"capteur,numero={data[1].zfill(2)} intensity={int(data[4])},etat={int(data[3])}"
 
-            client.connect(MQTT_SERVER, MQTT_PORT) # Connexion au serveur MQTT
-            client.publish(MQTT_TOPIC, point) # Publication du message
-            client.disconnect() # Déconnexion du serveur MQTT
+client.connect(MQTT_SERVER, MQTT_PORT) # Connexion au serveur MQTT
+client.publish(MQTT_TOPIC, point) # Publication du message
+client.disconnect() # Déconnexion du serveur MQTT
