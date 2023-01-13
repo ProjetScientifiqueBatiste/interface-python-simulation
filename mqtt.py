@@ -5,17 +5,19 @@ import serial
 
 import requests
 
-def postApi(data):
-    ip = "TEST"
-    port = "5000"
+def putApi(data):
+    """ Ne marche pas """
+    ip = "176.191.15.114"
+    port = "9090"
 
-    # Send data to the server
-    r = requests.post(f"http://{ip}:{port}/api/postData", json=data)
-    print(f"Résultat requete : {r.text}")
+    if int(data[4]) != 10 :
+        # Send data to the server
+        r = requests.put(f"http://{ip}:{port}/UrgenceManager/Capteur/UpdateCapteurData?OnlyId=false&Id={data[1]}&Intensite={data[4]}")
+
 
 # UART
 PORT = 'COM6'
-UART_SPEED = 9600
+UART_SPEED = 38400
 ser = serial.Serial()
 
 isSerialOpen = False
@@ -51,7 +53,7 @@ MQTT_SERVER = "127.0.0.1"
 MQTT_PORT = 1883
 MQTT_TOPIC = "capteur"
 
-client = mqtt.Client() #Création client MQTT
+client = mqtt.Client() # Création client MQTT
 
 initUart(PORT, UART_SPEED)
 
@@ -94,21 +96,12 @@ while True:
                 print("Taille OK")
                 print(data)
 
+            # Envoie des données à l'API de l'Emergency Manager
+            putApi(data)
 
+            # Envoie des données au serveur influxDB
+            point = f"capteur,numero={data[1].zfill(2)} intensity={int(data[4])},etat={int(data[3])}"
 
-            point = f"capteur,numero={int(data[1])} intensity={int(data[4])},etat={int(data[3])}"
-            try :
-                client.connect(MQTT_SERVER,MQTT_PORT)
-                print("Connection to MQTT server successful")
-            except :
-                print("Connection to MQTT server failed")
-                exit()
-
-            try:
-                client.publish(MQTT_TOPIC,point)
-                print("Sent")
-            except:
-                print("Publishing Error")
-                exit()
-
-            client.disconnect()
+            client.connect(MQTT_SERVER, MQTT_PORT) # Connexion au serveur MQTT
+            client.publish(MQTT_TOPIC, point) # Publication du message
+            client.disconnect() # Déconnexion du serveur MQTT

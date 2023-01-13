@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request
+import json
 
 app = Flask(__name__)
 
-ip = "172.20.10.3"
+ip = "192.168.1.172"
 port = "5000"
 
 data = ""
@@ -15,12 +16,13 @@ def index():
 def postData():
     global data
     data = request.get_json()
-    print(f"Reçu : {data}")
+    # Pretty print
+    print(data)
     return "ok"
 
 @app.route('/api/getData', methods=['GET'])
 def getData():
-    print(f"Envoie de : {data}")
+    # print(f"Envoie de : {data}")
     # Return a json object
     return data
 

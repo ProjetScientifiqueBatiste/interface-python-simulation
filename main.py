@@ -5,7 +5,7 @@ import json
 import requests
 
 # API
-ip = "172.20.10.3"
+ip = "192.168.1.172"
 port = "5000"
 
 def getData(ip, port):
@@ -16,7 +16,7 @@ def getData(ip, port):
 
 # UART
 PORT = 'COM9'
-UART_SPEED = 9600
+UART_SPEED = 38400
 ser = serial.Serial()
 
 isSerialOpen = False
@@ -75,6 +75,8 @@ if __name__ == '__main__':
 
     while True:
 
+        cpt = 0
+
         print("========= UART Data sending START =========")
 
         try :
@@ -84,18 +86,19 @@ if __name__ == '__main__':
             datas = []
 
         for capteur in datas:
-            idCapteur = str(capteur["idSensor"]).zfill(2)
-            if len(idCapteur) <= 2:
-                state = int(1 and random.randint(0, 19) != 0)
-                intensity = str(capteur["intensite"] if state else 10).zfill(2)
+            idCapteur = str(cpt).zfill(2)
+            state = int(1 and random.randint(0, 19) != 0)
+            intensity = str(capteur["intensite"] if state else 10).zfill(2)
 
-                data = f"{idCapteur}{state}{intensity}"
+            data = f"{idCapteur}{state}{intensity}"
 
-                print(f"Sending data : {data}")
-                sendUartData(data)
-                time.sleep(0.1)
+            print(f"Sending data : {data}")
+            sendUartData(data)
+            time.sleep(0.1)
+
+            cpt += 1
 
         print("========= UART Data sending END =========")
 
-        time.sleep(10)
+        time.sleep(15)
 
